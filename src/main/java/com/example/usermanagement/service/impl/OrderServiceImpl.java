@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 import com.example.usermanagement.dto.OrderPostRequest;
 import com.example.usermanagement.dto.OrderItemRequest;
@@ -37,9 +36,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public Order createOrder(OrderPostRequest request) {
         User user = validateAndGetUser(request.getUserId());
-        List<OrderItem> orderItems = request.getItems().stream()
-                .map(this::processOrderItem)
-                .toList();
+        List<OrderItem> orderItems = processOrderItems(request.getItems());
         Order order = buildOrder(user, orderItems);
         saveOrderAndItems(order, orderItems);
         return order;
@@ -50,17 +47,39 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
+    private List<OrderItem> processOrderItems(List<OrderItemRequest> items) {
+        return items.stream()
+                .map(this::processOrderItem)
+                .toList();
+    }
+
     private OrderItem processOrderItem(OrderItemRequest itemReq) {
-        Product product = productRepository.findById(itemReq.getProductId())
-                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + itemReq.getProductId()));
-        if (product.getStock() < itemReq.getQuantity()) {
-            throw new InsufficientStockException("Not enough product in stock for productId: " + itemReq.getProductId());
+        Product product = validateAndGetProduct(itemReq.getProductId());
+        checkStockAvailability(product, itemReq.getQuantity());
+        updateProductStock(product, itemReq.getQuantity());
+        return buildOrderItem(product, itemReq.getQuantity());
+    }
+
+    private Product validateAndGetProduct(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+    }
+
+    private void checkStockAvailability(Product product, int quantity) {
+        if (product.getStock() < quantity) {
+            throw new InsufficientStockException("Not enough product in stock for productId: " + product.getId());
         }
-        product.setStock(product.getStock() - itemReq.getQuantity());
+    }
+
+    private void updateProductStock(Product product, int quantity) {
+        product.setStock(product.getStock() - quantity);
         productRepository.save(product);
+    }
+
+    private OrderItem buildOrderItem(Product product, int quantity) {
         return OrderItem.builder()
                 .product(product)
-                .quantity(itemReq.getQuantity())
+                .quantity(quantity)
                 .price(product.getPrice())
                 .build();
     }
@@ -110,4 +129,4 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getOrdersByUserId(Long userId) {
         return orderRepository.findByUserId(userId);
     }
-} 
+}

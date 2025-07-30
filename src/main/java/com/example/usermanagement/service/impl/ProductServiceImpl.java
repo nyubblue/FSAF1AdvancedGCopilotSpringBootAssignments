@@ -9,6 +9,8 @@ import com.example.usermanagement.repository.CategoryRepository;
 import com.example.usermanagement.repository.ProductRepository;
 import com.example.usermanagement.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "product-details", key = "#id")
     public ProductDTO getById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
@@ -47,6 +50,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = "product-details", key = "#id")
     public ProductDTO update(Long id, ProductDTO dto) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
@@ -71,4 +75,4 @@ public class ProductServiceImpl implements ProductService {
     public int countByCategory(Long categoryId) {
         return productRepository.countByCategory(categoryId);
     }
-} 
+}

@@ -24,8 +24,10 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql:1.19.7'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     testImplementation 'org.springframework.security:spring-security-test'
+    implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:8.2.0'
+    implementation 'com.github.vladimir-bukhtoyarov:bucket4j-jcache:8.2.0'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
-} 
+}

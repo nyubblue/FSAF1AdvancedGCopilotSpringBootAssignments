@@ -8,9 +8,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +23,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
+@Table(name = "product", indexes = {
+    @Index(name = "idx_product_name", columnList = "name")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -51,4 +56,4 @@ public class Product extends Auditable {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Review> reviews;
-} 
+}
